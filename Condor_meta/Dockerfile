@@ -1,36 +1,25 @@
-# Use the official Ubuntu base image
+# Use Ubuntu as the base image
 FROM ubuntu:latest
 
-# Set environment variables to non-interactive
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Update the package list and install prerequisites
+# Install required packages
 RUN apt-get update && \
     apt-get install -y \
-    apt-transport-https \
-    ca-certificates \
     curl \
-    software-properties-common \
-    nano \ 
-    git
+    ca-certificates \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
-# Add Docker's official GPG key
-RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+# Set the IMG_SHA256 environment variable
+ENV IMG_SHA256="cc9bf08794353ef57b400d32cd1065765253166b0a09fba360d927cfbd158088"
 
-# Add Docker's stable repository
-RUN add-apt-repository \
-    "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-    $(lsb_release -cs) \
-    stable"
+# Download and verify the sha256sum
+RUN curl -fSL "https://github.com/genuinetools/img/releases/download/v0.5.11/img-linux-amd64" -o "/usr/local/bin/img" \
+    && echo "${IMG_SHA256}  /usr/local/bin/img" | sha256sum -c - \
+    && chmod a+x "/usr/local/bin/img"
 
-# Update the package list again and install Docker
-RUN apt-get update && \
-    apt-get install -y docker-ce docker-ce-cli containerd.io
-
-# Enable Docker service
-RUN systemctl enable docker
-
+# Create the working directory and set premissions
 RUN mkdir -p /workingdir && \
     chmod -R a+rwx /workingdir
 
-
+# Download docker files
+RUN git clone https://github.com/ldelaB2/Condor_Meta.git /workingdir
